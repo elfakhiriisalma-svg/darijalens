@@ -3,6 +3,7 @@
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 
+from app.analyze import router as analyze_router
 from app.config import get_settings
 from app.db import check_database
 
@@ -13,6 +14,8 @@ app = FastAPI(
     version=settings.app_version,
     description="Analyse et traduction de la darija écrite.",
 )
+
+app.include_router(analyze_router)
 
 
 @app.get("/health", tags=["monitoring"])

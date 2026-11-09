@@ -5,10 +5,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /code
 
-COPY requirements.txt .
+COPY apps/api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
+COPY apps/api/app ./app
+COPY packages/nlp/darijalens_nlp ./darijalens_nlp
 
 # Ne pas exécuter le serveur en tant que root
 RUN useradd --create-home appuser
