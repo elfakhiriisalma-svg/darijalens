@@ -24,19 +24,21 @@ def test_basic_cleaning(raw: str, expected: str) -> None:
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [
-        ("mzyaaaan", "mzyaan"),
-        ("bzzaf", "bzzaf"),  # un doublon légitime est conservé
-        ("belle", "belle"),
-        ("مزيااااان", "مزياان"),
+        ("mzyaaaan", "mzyan"),
+        ("bzzaf", "bzaf"),  # limite connue : un doublon légitime est aussi réduit
+        ("belle", "bele"),
+        ("مزيااااان", "مزيان"),
         ("1000 dh", "1000 dh"),  # les chiffres ne sont jamais réduits
     ],
 )
-def test_elongation_is_limited_to_two_letters(raw: str, expected: str) -> None:
+def test_elongation_is_limited_to_one_letter(raw: str, expected: str) -> None:
     assert normalize_text(raw) == expected
 
 
-def test_elongation_can_be_reduced_to_one_letter() -> None:
-    assert normalize_text("mzyaaaan", NormalizationConfig(max_repeat=1)) == "mzyan"
+def test_elongation_can_keep_two_letters() -> None:
+    config = NormalizationConfig(max_repeat=2)
+    assert normalize_text("mzyaaaan", config) == "mzyaan"
+    assert normalize_text("belle", config) == "belle"
 
 
 def test_elongation_can_be_disabled() -> None:
@@ -49,7 +51,7 @@ def test_elongation_can_be_disabled() -> None:
         ("bzaf!!!", "bzaf!"),
         ("wach???", "wach?"),
         ("واش؟؟؟", "واش؟"),
-        ("hmm...", "hmm."),
+        ("ok...", "ok."),
     ],
 )
 def test_repeated_punctuation_is_collapsed(raw: str, expected: str) -> None:

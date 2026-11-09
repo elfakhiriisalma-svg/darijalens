@@ -6,8 +6,9 @@ Cela permet de mesurer l'effet de chaque règle sur les modèles (étude d'ablat
 Choix de conception importants :
 - La normalisation est prudente : on ne corrige pas l'orthographe et on ne devine pas
   les mots, car cela demande un lexique issu de vraies données.
-- Les allongements sont réduits à `max_repeat` lettres (2 par défaut) et non à 1, pour ne pas
-  abîmer des mots légitimes comme « belle » ou « bzzaf ».
+- Les allongements sont réduits à `max_repeat` lettres (1 par défaut : « mzyaaaan » devient
+  « mzyan »). Attention : cela abîme les doublons légitimes (« belle » devient « bele »).
+  On peut passer max_repeat=2 pour les garder, ou None pour désactiver la règle.
 - Les emojis sont conservés par défaut, car ils portent souvent le sentiment.
 - Les données personnelles (liens, e-mails, mentions, téléphones) sont remplacées par des
   marqueurs, ce qui aide aussi à respecter l'anonymisation exigée par le cahier des charges.
@@ -25,7 +26,7 @@ USER_TOKEN = "<user>"
 PHONE_TOKEN = "<phone>"
 
 # Nombre maximal de fois qu'une même lettre peut se répéter d'affilée.
-DEFAULT_MAX_REPEAT = 2
+DEFAULT_MAX_REPEAT = 1
 
 _URL = re.compile(r"(?:https?://|www\.)\S*[^\s.,;:!?)\]}»]", re.IGNORECASE)
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
