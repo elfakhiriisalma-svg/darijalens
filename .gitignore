@@ -16,6 +16,8 @@ venv/
 data/*
 !data/.gitkeep
 *.pt
+*.joblib
+models/
 *.bin
 *.safetensors
 mlruns/
