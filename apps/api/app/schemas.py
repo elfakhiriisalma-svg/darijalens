@@ -24,3 +24,21 @@ class AnalyzeResponse(BaseModel):
     latin_letters: int = Field(description="Nombre de lettres latines.")
     normalized_text: str = Field(description="Texte nettoyé.")
     arabic_text: str = Field(description="Texte nettoyé, avec les mots latins transcrits en arabe.")
+
+
+class ExplanationItem(BaseModel):
+    """Un élément du texte qui a pesé dans la décision."""
+
+    feature: str = Field(description="Mot ou suite de lettres.")
+    weight: float = Field(
+        description="Positif : pousse vers offensant. Négatif : vers non offensant."
+    )
+
+
+class OffensiveResponse(BaseModel):
+    """Résultat de la détection de langage offensant."""
+
+    label: int = Field(description="1 si offensant, 0 sinon.")
+    name: str = Field(description="offensive ou non_offensive.")
+    score: float = Field(ge=0, le=1, description="Probabilité estimée d'être offensant.")
+    explanation: list[ExplanationItem] = Field(description="Éléments qui ont le plus pesé.")

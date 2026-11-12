@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     app_name: str = "DarijaLens API"
     app_version: str = "0.1.0"
     database_url: str = "postgresql+psycopg://darijalens:change-me@db:5432/darijalens"
+    offensive_model_path: str = "models/offensive.joblib"
 
 
 @lru_cache
