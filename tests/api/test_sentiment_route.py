@@ -43,6 +43,14 @@ def test_negative_text(client: TestClient) -> None:
     assert body["score"] < 0.5
 
 
+def test_score_in_hesitation_zone_gives_uncertain(client: TestClient, monkeypatch) -> None:
+    wide = SimpleNamespace(sentiment_uncertain_low=0.0, sentiment_uncertain_high=1.0)
+    monkeypatch.setattr("app.sentiment.get_settings", lambda: wide)
+    body = client.post("/sentiment", json={"text": "zwin bzaf bravo"}).json()
+    assert body["label"] == 2
+    assert body["name"] == "uncertain"
+
+
 @pytest.mark.parametrize("payload", [{}, {"text": ""}, {"text": "a" * (MAX_TEXT_LENGTH + 1)}])
 def test_sentiment_rejects_invalid_input(client: TestClient, payload: dict) -> None:
     assert client.post("/sentiment", json=payload).status_code == 422

@@ -47,7 +47,7 @@ class OffensiveResponse(BaseModel):
 class SentimentResponse(BaseModel):
     """Résultat de l'analyse de sentiment."""
 
-    label: int = Field(description="1 si positif, 0 si négatif.")
-    name: str = Field(description="positive ou negative.")
+    label: int = Field(description="1 si positif, 0 si négatif, 2 si le modèle hésite.")
+    name: str = Field(description="positive, negative ou uncertain (score proche de 0,5).")
     score: float = Field(ge=0, le=1, description="Probabilité estimée d'être positif.")
     explanation: list[ExplanationItem] = Field(description="Éléments qui ont le plus pesé.")

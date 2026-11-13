@@ -11,6 +11,9 @@ from darijalens_nlp.sentiment import SentimentClassifier
 
 router = APIRouter(tags=["analyse"])
 
+UNCERTAIN_LABEL = 2
+UNCERTAIN_NAME = "uncertain"
+
 
 @lru_cache
 def _load_classifier(path: str) -> SentimentClassifier:
@@ -33,15 +36,19 @@ def analyze_sentiment(
     request: AnalyzeRequest,
     classifier: SentimentClassifier = Depends(get_sentiment_classifier),  # noqa: B008
 ) -> SentimentResponse:
-    """Dit si un commentaire est positif ou négatif, avec un score et les éléments qui ont pesé."""
+    """Dit si un commentaire est positif, négatif ou incertain, avec un score et les mots clés."""
     prediction = classifier.predict(request.text)
+    settings = get_settings()
+    label, name = prediction.label, prediction.name
+    if settings.sentiment_uncertain_low <= prediction.score <= settings.sentiment_uncertain_high:
+        label, name = UNCERTAIN_LABEL, UNCERTAIN_NAME
     explanation = [
         ExplanationItem(feature=feature, weight=weight)
         for feature, weight in classifier.explain(request.text)
     ]
     return SentimentResponse(
-        label=prediction.label,
-        name=prediction.name,
+        label=label,
+        name=name,
         score=prediction.score,
         explanation=explanation,
     )
