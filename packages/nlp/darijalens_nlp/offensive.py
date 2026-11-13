@@ -139,7 +139,9 @@ def build_pipeline(c: float = 4.0) -> Pipeline:
     return Pipeline([("features", features), ("classifier", classifier)])
 
 
-def _metrics(y_true: Sequence[int], y_pred: Sequence[int]) -> dict[str, Any]:
+def _metrics(
+    y_true: Sequence[int], y_pred: Sequence[int], label_names: dict[int, str] = LABEL_NAMES
+) -> dict[str, Any]:
     precision, recall, f1, support = precision_recall_fscore_support(
         y_true, y_pred, labels=[0, 1], zero_division=0
     )
@@ -148,7 +150,7 @@ def _metrics(y_true: Sequence[int], y_pred: Sequence[int]) -> dict[str, Any]:
         "accuracy": float(accuracy_score(y_true, y_pred)),
         "macro_f1": float(np.mean(f1)),
         "per_class": {
-            LABEL_NAMES[i]: {
+            label_names[i]: {
                 "precision": float(precision[i]),
                 "recall": float(recall[i]),
                 "f1": float(f1[i]),
@@ -160,20 +162,28 @@ def _metrics(y_true: Sequence[int], y_pred: Sequence[int]) -> dict[str, Any]:
     }
 
 
-def evaluate(model: Pipeline, examples: Sequence[Example]) -> dict[str, Any]:
+def evaluate(
+    model: Pipeline, examples: Sequence[Example], label_names: dict[int, str] = LABEL_NAMES
+) -> dict[str, Any]:
     """Mesure globale, puis séparément pour chaque écriture (arabe, latin, mixte...)."""
     y_true = [e.label for e in examples]
     y_pred = model.predict([e.text for e in examples]).tolist()
-    result = _metrics(y_true, y_pred)
+    result = _metrics(y_true, y_pred, label_names)
     by_script: dict[str, Any] = {}
     for script in sorted({e.script for e in examples}):
         indexes = [i for i, e in enumerate(examples) if e.script == script]
-        by_script[script] = _metrics([y_true[i] for i in indexes], [y_pred[i] for i in indexes])
+        by_script[script] = _metrics(
+            [y_true[i] for i in indexes], [y_pred[i] for i in indexes], label_names
+        )
     result["by_script"] = by_script
     return result
 
 
-def script_only_baseline(train: Sequence[Example], test: Sequence[Example]) -> dict[str, Any]:
+def script_only_baseline(
+    train: Sequence[Example],
+    test: Sequence[Example],
+    label_names: dict[int, str] = LABEL_NAMES,
+) -> dict[str, Any]:
     """Base trop simple : prédire, pour chaque écriture, l'étiquette la plus fréquente.
 
     Si le modèle ne fait pas nettement mieux, c'est qu'il apprend un raccourci.
@@ -184,7 +194,7 @@ def script_only_baseline(train: Sequence[Example], test: Sequence[Example]) -> d
     overall = Counter(e.label for e in train).most_common(1)[0][0]
     rule = {script: counts.most_common(1)[0][0] for script, counts in labels_by_script.items()}
     y_pred = [rule.get(e.script, overall) for e in test]
-    return _metrics([e.label for e in test], y_pred)
+    return _metrics([e.label for e in test], y_pred, label_names)
 
 
 @dataclass(frozen=True)
@@ -193,11 +203,13 @@ class Prediction:
 
     label: int
     name: str
-    score: float  # probabilité d'être offensant, entre 0 et 1
+    score: float  # probabilité de la classe 1 (offensant, ou positif), entre 0 et 1
 
 
 class OffensiveClassifier:
     """Modèle entraîné, avec prédiction, explication, sauvegarde et chargement."""
+
+    label_names: dict[int, str] = LABEL_NAMES
 
     def __init__(self, pipeline: Pipeline) -> None:
         self.pipeline = pipeline
@@ -205,7 +217,7 @@ class OffensiveClassifier:
     def predict(self, text: str) -> Prediction:
         score = float(self.pipeline.predict_proba([preprocess(text)])[0][1])
         label = int(score >= 0.5)
-        return Prediction(label=label, name=LABEL_NAMES[label], score=score)
+        return Prediction(label=label, name=self.label_names[label], score=score)
 
     def explain(self, text: str, top_k: int = 5) -> list[tuple[str, float]]:
         """Les éléments du texte qui ont le plus pesé : positif = vers « offensant »."""

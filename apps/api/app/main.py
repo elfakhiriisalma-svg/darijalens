@@ -7,6 +7,7 @@ from app.analyze import router as analyze_router
 from app.config import get_settings
 from app.db import check_database
 from app.offensive import router as offensive_router
+from app.sentiment import router as sentiment_router
 
 settings = get_settings()
 
@@ -18,6 +19,7 @@ app = FastAPI(
 
 app.include_router(analyze_router)
 app.include_router(offensive_router)
+app.include_router(sentiment_router)
 
 
 @app.get("/health", tags=["monitoring"])
