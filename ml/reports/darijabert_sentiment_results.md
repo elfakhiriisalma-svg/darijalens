@@ -23,3 +23,24 @@ Validation (F1 macro par epoch) :
   les chiffres arabes ci-dessus viennent de la sortie du notebook, pas d'un fichier.
 - Le corpus MYC reste un corpus de commentaires à 2 classes. L'évaluation finale doit se faire
   sur notre propre corpus annoté.
+
+## Essai : ajouter des phrases de négation à l'entraînement
+
+Problème observé : `ماشي مزيان هاد الشي` (« ce n'est pas bien ») et `ما كاينش مشكل، كلشي مزيان`
+(« pas de problème, tout est bien ») sont mal classées. Le modèle simple rate aussi `ماعجبنيش`.
+
+Données : `ml/data/negation_phrases.csv`, 69 phrases écrites à la main pour l'expérience
+(négations positives et négatives, plus des phrases sans négation), relues et validées par Salma.
+Une ligne sur quatre (18 phrases) est gardée de côté et ne sert jamais à l'entraînement.
+
+| Modèle (DarijaBERT arabe) | Négation jamais vue (18 phrases) | F1 macro arabe, test sans emojis |
+|---|---|---|
+| Sans phrases de négation | 9/18 = 0,50 | 0,859 |
+| + 51 phrases répétées 3 fois | 10/18 = 0,56 | 0,867 |
+| + 51 phrases répétées 15 fois | 7/18 = 0,39 | 0,870 |
+
+Conclusion : **cette approche ne règle pas le problème.** Avec 18 phrases, une phrase pèse 5,6 points,
+donc ces écarts sont du bruit. Le F1 arabe varie de 0,859 à 0,870 d'une exécution à l'autre,
+ce qui donne l'ordre de grandeur de la variabilité du fine-tuning sur GPU.
+Prochaine piste : de vrais commentaires avec négation dans notre propre corpus annoté.
+Mesure de repli en place : l'API répond `uncertain` quand le score est entre 0,40 et 0,60.
