@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://darijalens:change-me@db:5432/darijalens"
     offensive_model_path: str = "models/offensive.joblib"
     sentiment_model_path: str = "models/sentiment.joblib"
+    translation_model: str = "facebook/nllb-200-distilled-600M"
     # Entre ces deux scores, le modèle hésite : on répond « uncertain » au lieu de forcer un choix.
     sentiment_uncertain_low: float = 0.4
     sentiment_uncertain_high: float = 0.6

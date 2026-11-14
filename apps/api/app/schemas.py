@@ -1,5 +1,7 @@
 """Formats des données échangées avec l'API."""
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 MAX_TEXT_LENGTH = 5000
@@ -51,3 +53,24 @@ class SentimentResponse(BaseModel):
     name: str = Field(description="positive, negative ou uncertain (score proche de 0,5).")
     score: float = Field(ge=0, le=1, description="Probabilité estimée d'être positif.")
     explanation: list[ExplanationItem] = Field(description="Éléments qui ont le plus pesé.")
+
+
+class TranslateRequest(BaseModel):
+    """Texte à traduire."""
+
+    text: str = Field(
+        min_length=1,
+        max_length=MAX_TEXT_LENGTH,
+        description="Texte en darija (arabe, arabizi ou mélange).",
+        examples=["شحال هاد الطوموبيل؟"],
+    )
+    target: Literal["fr", "en"] = Field(description="Langue cible : fr ou en.")
+
+
+class TranslateResponse(BaseModel):
+    """Résultat de la traduction."""
+
+    target: str = Field(description="Langue de la traduction : fr ou en.")
+    translation: str = Field(description="Texte traduit.")
+    source_used: str = Field(description="Texte réellement envoyé au modèle (nettoyé).")
+    transliterated: bool = Field(description="Vrai si de l'arabizi a été transcrit en arabe.")
