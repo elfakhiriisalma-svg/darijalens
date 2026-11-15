@@ -1,5 +1,6 @@
 """Route de traduction darija vers français ou anglais."""
 
+from collections.abc import Sequence
 from functools import lru_cache
 from typing import Protocol
 
@@ -15,7 +16,7 @@ router = APIRouter(tags=["traduction"])
 class Translator(Protocol):
     """Ce que la route attend d'un traducteur (permet de le remplacer dans les tests)."""
 
-    def translate(self, text: str, target: str) -> Translation: ...
+    def translate(self, text: str, targets: Sequence[str]) -> Translation: ...
 
 
 @lru_cache
@@ -44,11 +45,10 @@ def translate(
     request: TranslateRequest,
     translator: Translator = Depends(get_translator),  # noqa: B008
 ) -> TranslateResponse:
-    """Traduit un texte en darija (arabe ou arabizi) vers le français ou l'anglais."""
-    result = translator.translate(request.text, request.target)
+    """Traduit un texte en darija (arabe ou arabizi) vers le français et/ou l'anglais."""
+    result = translator.translate(request.text, list(dict.fromkeys(request.targets)))
     return TranslateResponse(
-        target=request.target,
-        translation=result.text,
+        translations=result.texts,
         source_used=result.source,
         transliterated=result.transliterated,
     )

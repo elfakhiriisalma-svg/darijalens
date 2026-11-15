@@ -44,3 +44,11 @@ donc ces écarts sont du bruit. Le F1 arabe varie de 0,859 à 0,870 d'une exécu
 ce qui donne l'ordre de grandeur de la variabilité du fine-tuning sur GPU.
 Prochaine piste : de vrais commentaires avec négation dans notre propre corpus annoté.
 Mesure de repli en place : l'API répond `uncertain` quand le score est entre 0,40 et 0,60.
+
+## Test complémentaire de la négation (12 phrases nouvelles, DarijaBERT sans entraînement de négation)
+
+11 phrases sur 12 correctes. Les négations avec verbe (`ما عجبنيش`, `ما كيستاهلش`, `ما جاوبونيش`)
+sont bien classées. L'erreur restante est `ماشي خايبة هاد الخدمة` (« ce service n'est pas mauvais »,
+score 0,49) : la faiblesse se concentre sur **`ماشي` + adjectif** (voir aussi `ماشي مزيان`, `ماشي زوين`).
+Les phrases à 0,54 et 0,49 tombent dans la zone `uncertain` (0,40 à 0,60).
+Limite : 12 phrases écrites par l'équipe de développement, donc un signe encourageant et non une preuve.

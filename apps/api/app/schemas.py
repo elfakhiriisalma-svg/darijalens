@@ -64,13 +64,19 @@ class TranslateRequest(BaseModel):
         description="Texte en darija (arabe, arabizi ou mélange).",
         examples=["شحال هاد الطوموبيل؟"],
     )
-    target: Literal["fr", "en"] = Field(description="Langue cible : fr ou en.")
+    targets: list[Literal["fr", "en", "ar", "msa"]] = Field(
+        default=["fr", "en", "ar"],
+        min_length=1,
+        description=(
+            "Cibles : fr, en, ar (la darija en lettres arabes, sans traduction) et msa "
+            "(traduction en arabe standard). Par défaut : fr, en et ar."
+        ),
+    )
 
 
 class TranslateResponse(BaseModel):
     """Résultat de la traduction."""
 
-    target: str = Field(description="Langue de la traduction : fr ou en.")
-    translation: str = Field(description="Texte traduit.")
+    translations: dict[str, str] = Field(description="Traduction pour chaque langue demandée.")
     source_used: str = Field(description="Texte réellement envoyé au modèle (nettoyé).")
     transliterated: bool = Field(description="Vrai si de l'arabizi a été transcrit en arabe.")

@@ -10,8 +10,9 @@ from darijalens_nlp.translate import Translation
 
 
 class FakeTranslator:
-    def translate(self, text: str, target: str) -> Translation:
-        return Translation(text=f"[{target}] {text}", source=text, transliterated=False)
+    def translate(self, text: str, targets) -> Translation:
+        texts = {target: f"[{target}] {text}" for target in targets}
+        return Translation(texts=texts, source=text, transliterated=False)
 
 
 @pytest.fixture
@@ -21,22 +22,30 @@ def client():
     app.dependency_overrides.clear()
 
 
-@pytest.mark.parametrize("target", ["fr", "en"])
-def test_translate_returns_translation(client: TestClient, target: str) -> None:
-    body = client.post("/translate", json={"text": "الطقس زوين", "target": target}).json()
-    assert body["target"] == target
-    assert body["translation"] == f"[{target}] الطقس زوين"
+def test_translate_returns_all_targets_by_default(client: TestClient) -> None:
+    body = client.post("/translate", json={"text": "الطقس زوين"}).json()
+    assert body["translations"] == {
+        "fr": "[fr] الطقس زوين",
+        "en": "[en] الطقس زوين",
+        "ar": "[ar] الطقس زوين",
+    }
     assert body["transliterated"] is False
+
+
+@pytest.mark.parametrize("target", ["fr", "en", "ar", "msa"])
+def test_translate_can_ask_for_one_language(client: TestClient, target: str) -> None:
+    body = client.post("/translate", json={"text": "الطقس زوين", "targets": [target]}).json()
+    assert list(body["translations"]) == [target]
 
 
 @pytest.mark.parametrize(
     "payload",
     [
         {},
-        {"text": "salam"},
-        {"text": "", "target": "fr"},
-        {"text": "salam", "target": "de"},
-        {"text": "a" * (MAX_TEXT_LENGTH + 1), "target": "fr"},
+        {"text": ""},
+        {"text": "salam", "targets": []},
+        {"text": "salam", "targets": ["de"]},
+        {"text": "a" * (MAX_TEXT_LENGTH + 1)},
     ],
 )
 def test_translate_rejects_invalid_input(client: TestClient, payload: dict) -> None:
@@ -48,6 +57,6 @@ def test_translate_returns_503_when_libraries_are_missing(monkeypatch) -> None:
         raise ImportError("No module named 'torch'")
 
     monkeypatch.setattr("app.translate._load_translator", missing)
-    response = TestClient(app).post("/translate", json={"text": "salam", "target": "fr"})
+    response = TestClient(app).post("/translate", json={"text": "salam"})
     assert response.status_code == 503
     assert "requirements-translation.txt" in response.json()["detail"]
