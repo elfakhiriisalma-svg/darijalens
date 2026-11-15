@@ -27,6 +27,7 @@ from darijalens_nlp import (  # noqa: E402
 )
 
 DEFAULT_CSV = Path("data/raw/doda/sentences/sentences.csv")
+HOLDOUT_EVERY = 5  # une phrase sur cinq est gardée de côté (voir build_lexicon.py)
 _NOT_WORD = re.compile(r"[^\w\s]")
 
 
@@ -38,14 +39,25 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV, help="fichier sentences.csv")
     parser.add_argument("--examples", type=int, default=5, help="nombre d'exemples affichés")
+    parser.add_argument(
+        "--holdout",
+        action="store_true",
+        help="n'évalue que les phrases NON utilisées pour construire le dictionnaire",
+    )
+    parser.add_argument(
+        "--rules-only", action="store_true", help="ignore le dictionnaire (règles seules)"
+    )
     args = parser.parse_args()
 
     with args.csv.open(encoding="utf-8", newline="") as file:
         rows = list(csv.DictReader(file))
+    if args.holdout:
+        rows = [row for index, row in enumerate(rows) if index % HOLDOUT_EVERY == 0]
+    lexicon = {} if args.rules_only else None
 
     sources = [row["darija"] for row in rows]
     references = [_clean(row["darija_ar"]) for row in rows]
-    hypotheses = [_clean(transliterate_arabizi(normalize_text(text))) for text in sources]
+    hypotheses = [_clean(transliterate_arabizi(normalize_text(text), lexicon)) for text in sources]
 
     cer = character_error_rate(references, hypotheses)
     exact = sum(ref == hyp for ref, hyp in zip(references, hypotheses, strict=True))

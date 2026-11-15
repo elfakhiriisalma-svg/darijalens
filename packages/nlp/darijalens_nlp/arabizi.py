@@ -21,6 +21,9 @@ Limites connues, volontairement non cachées :
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
+
+from darijalens_nlp.lexicon import default_lexicon
 
 _WORD = re.compile(r"[0-9A-Za-zÀ-ÖØ-öø-ÿ'’]+")
 _MASK = re.compile(r"<(?:url|email|user|phone)>")
@@ -110,17 +113,19 @@ def _resolve_vowel(vowel: str, is_first: bool) -> str:
     return ""  # « e » à l'intérieur ou à la fin d'un mot : ignoré
 
 
-def _transliterate_word(word: str) -> str:
+def _transliterate_word(word: str, lexicon: Mapping[str, str]) -> str:
     lowered = word.lower()
     if not lowered.isascii():
         return word  # lettre accentuée : probablement du français
+    if lowered in lexicon:
+        return lexicon[lowered]  # mot connu : écriture arabe humaine du dictionnaire
     pieces = []
     for index, (kind, value) in enumerate(_split_word(lowered)):
         pieces.append(_resolve_vowel(value, index == 0) if kind == _VOWEL else value)
     return _REPEATED_ARABIC.sub(r"\1", "".join(pieces))
 
 
-def transliterate_arabizi(text: str) -> str:
+def transliterate_arabizi(text: str, lexicon: Mapping[str, str] | None = None) -> str:
     """Transcrit en arabe les mots écrits en lettres latines et chiffres.
 
     Les mots déjà en arabe, la ponctuation, les emojis et les marqueurs
@@ -128,6 +133,9 @@ def transliterate_arabizi(text: str) -> str:
 
     Args:
         text: le texte, de préférence déjà normalisé.
+        lexicon: dictionnaire mot latin -> mot arabe. Par défaut, celui fourni avec la
+            bibliothèque (vide s'il n'a pas été construit). Passer `{}` pour n'utiliser que
+            les règles.
 
     Returns:
         Le texte dont les mots latins ont été transcrits.
@@ -138,8 +146,10 @@ def transliterate_arabizi(text: str) -> str:
     if not isinstance(text, str):
         raise TypeError(f"text doit être une chaîne, reçu : {type(text).__name__}")
 
+    known = default_lexicon() if lexicon is None else lexicon
+
     def convert(chunk: str) -> str:
-        return _WORD.sub(lambda match: _transliterate_word(match.group()), chunk)
+        return _WORD.sub(lambda match: _transliterate_word(match.group(), known), chunk)
 
     result = []
     position = 0

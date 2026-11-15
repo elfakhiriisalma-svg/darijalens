@@ -80,3 +80,49 @@ class TranslateResponse(BaseModel):
     translations: dict[str, str] = Field(description="Traduction pour chaque langue demandée.")
     source_used: str = Field(description="Texte réellement envoyé au modèle (nettoyé).")
     transliterated: bool = Field(description="Vrai si de l'arabizi a été transcrit en arabe.")
+
+
+class HistoryEntry(BaseModel):
+    """Ce que l'interface a affiché pour un texte, à garder dans l'historique."""
+
+    text: str = Field(min_length=1, max_length=MAX_TEXT_LENGTH)
+    script: Literal["arabic", "latin", "mixed", "unknown"]
+    sentiment: Literal["positive", "negative", "uncertain"] | None = None
+    sentiment_score: float | None = Field(default=None, ge=0, le=1)
+    offensive: Literal["offensive", "non_offensive"] | None = None
+    offensive_score: float | None = Field(default=None, ge=0, le=1)
+
+
+class HistoryCreated(BaseModel):
+    """Confirmation d'enregistrement."""
+
+    id: int
+
+
+class DailyCount(BaseModel):
+    """Nombre d'analyses un jour donné."""
+
+    date: str = Field(description="Jour au format AAAA-MM-JJ (UTC).")
+    count: int
+
+
+class RecentAnalysis(BaseModel):
+    """Une analyse récente."""
+
+    id: int
+    created_at: str
+    text: str
+    script: str
+    sentiment: str | None
+    offensive: str | None
+
+
+class StatsResponse(BaseModel):
+    """Statistiques sur les analyses enregistrées."""
+
+    total: int
+    sentiment: dict[str, int] = Field(description="positive, negative, uncertain.")
+    offensive: dict[str, int] = Field(description="offensive, non_offensive.")
+    scripts: dict[str, int] = Field(description="arabic, latin, mixed, unknown.")
+    daily: list[DailyCount]
+    recent: list[RecentAnalysis]

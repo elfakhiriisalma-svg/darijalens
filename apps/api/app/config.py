@@ -15,10 +15,16 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://darijalens:change-me@db:5432/darijalens"
     offensive_model_path: str = "models/offensive.joblib"
     sentiment_model_path: str = "models/sentiment.joblib"
+    # Adresses autorisées à appeler l'API depuis un navigateur (séparées par des virgules).
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     translation_model: str = "facebook/nllb-200-distilled-600M"
     # Entre ces deux scores, le modèle hésite : on répond « uncertain » au lieu de forcer un choix.
     sentiment_uncertain_low: float = 0.4
     sentiment_uncertain_high: float = 0.6
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 @lru_cache
